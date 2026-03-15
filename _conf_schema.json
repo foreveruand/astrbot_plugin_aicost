@@ -1,0 +1,62 @@
+{
+  "enable_daily_report": {
+    "type": "boolean",
+    "default": false,
+    "description": "启用每日定时报告"
+  },
+  "report_time": {
+    "type": "string",
+    "default": "08:00",
+    "description": "每日报告时间 (HH:MM)"
+  },
+  "azure_tenant_id": {
+    "type": "string",
+    "default": "",
+    "description": "Azure 租户 ID"
+  },
+  "azure_client_id": {
+    "type": "string",
+    "default": "",
+    "description": "Azure 客户端 ID"
+  },
+  "azure_client_secret": {
+    "type": "string",
+    "default": "",
+    "description": "Azure 客户端密钥"
+  },
+  "azure_subscription_id": {
+    "type": "string",
+    "default": "",
+    "description": "Azure 订阅 ID"
+  },
+  "openrouter_api_key": {
+    "type": "string",
+    "default": "",
+    "description": "OpenRouter API Key"
+  },
+  "google_project_id": {
+    "type": "string",
+    "default": "",
+    "description": "Google Cloud 项目 ID"
+  },
+  "google_bq_table": {
+    "type": "string",
+    "default": "",
+    "description": "BigQuery 账单表地址 (project.dataset.table)"
+  },
+  "google_service_account_json": {
+    "type": "string",
+    "default": "",
+    "description": "Google 服务账号 JSON 文件路径"
+  },
+  "xai_api_key": {
+    "type": "string",
+    "default": "",
+    "description": "xAI API Key"
+  },
+  "xai_team_id": {
+    "type": "string",
+    "default": "",
+    "description": "xAI Team ID"
+  }
+}
