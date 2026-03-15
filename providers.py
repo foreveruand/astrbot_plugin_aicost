@@ -231,8 +231,8 @@ async def query_google_ai_cost(config: "AICostConfig") -> dict:
 
         # Query SQL - grouped by model and token type
         query = f"""
-            SELECT 
-                CASE 
+            SELECT
+                CASE
                     WHEN LOWER(sku.description) LIKE '%gemini 2.5 flash native image generation%' THEN 'Nano Banana Pro'
                     WHEN LOWER(sku.description) LIKE '%gemini 3 pro native image generation%' THEN 'Nano Banana'
                     WHEN LOWER(sku.description) LIKE '%gemini 2.5 flash lite%' THEN 'Gemini 2.5 Flash Lite'
@@ -247,14 +247,14 @@ async def query_google_ai_cost(config: "AICostConfig") -> dict:
                     ELSE 'Other AI Services'
                 END as model_name,
                 CASE
-                    WHEN LOWER(sku.description) LIKE '%input%' 
-                        OR LOWER(sku.description) LIKE '%prompt%' 
-                        OR LOWER(sku.description) LIKE '%request%' 
+                    WHEN LOWER(sku.description) LIKE '%input%'
+                        OR LOWER(sku.description) LIKE '%prompt%'
+                        OR LOWER(sku.description) LIKE '%request%'
                         THEN 'input'
-                    WHEN LOWER(sku.description) LIKE '%output%' 
-                        OR LOWER(sku.description) LIKE '%response%' 
-                        OR LOWER(sku.description) LIKE '%candidate%' 
-                        OR LOWER(sku.description) LIKE '%generation%' 
+                    WHEN LOWER(sku.description) LIKE '%output%'
+                        OR LOWER(sku.description) LIKE '%response%'
+                        OR LOWER(sku.description) LIKE '%candidate%'
+                        OR LOWER(sku.description) LIKE '%generation%'
                         THEN 'output'
                     ELSE 'other'
                 END as token_type,
@@ -263,7 +263,7 @@ async def query_google_ai_cost(config: "AICostConfig") -> dict:
                 usage.unit,
                 currency
             FROM `{config.google_bq_table}`
-            WHERE 
+            WHERE
                 (
                     service.description LIKE '%Generative Language API%'
                     OR service.description LIKE '%Vertex AI%'
@@ -272,7 +272,7 @@ async def query_google_ai_cost(config: "AICostConfig") -> dict:
                 )
                 AND usage_start_time >= TIMESTAMP_TRUNC(CURRENT_TIMESTAMP(), MONTH)
                 AND cost > 0
-            GROUP BY 
+            GROUP BY
                 model_name,
                 token_type,
                 usage.unit,

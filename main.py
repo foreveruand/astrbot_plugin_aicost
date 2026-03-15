@@ -93,7 +93,7 @@ class Main(star.Star):
         """Send the scheduled daily report."""
         try:
             logger.info("Generating daily AI cost report...")
-            img_bytes = await self._generate_report_image()
+            await self._generate_report_image()
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             logger.info(f"Daily AI cost report generated at {timestamp}")
             # Note: For scheduled reports, implement broadcasting

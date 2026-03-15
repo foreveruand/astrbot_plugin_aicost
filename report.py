@@ -83,12 +83,12 @@ def generate_html_report(
         }}
         * {{ margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }}
         body {{ background: var(--bg); color: var(--text-main); padding: 20px; width: 720px; }}
-        
+
         .header {{ margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }}
         .header h1 {{ font-size: 20px; color: var(--text-main); opacity: 0.9; }}
 
         .dashboard-grid {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }}
-        
+
         .card {{ background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 15px; display: flex; flex-direction: column; }}
         .card-header {{ font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--text-dim); margin-bottom: 8px; display: flex; align-items: center; gap: 5px; }}
         .card-header::before {{ content: ""; width: 6px; height: 6px; border-radius: 50%; }}
@@ -98,7 +98,7 @@ def generate_html_report(
 
         .main-cost {{ font-size: 24px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: baseline; font-family: 'Consolas', monospace; }}
         .sub-balance {{ font-size: 11px; margin-left: auto; color: var(--text-dim); font-weight: 400; background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; }}
-        
+
         .google-text {{ color: var(--google); }} .xai-text {{ color: var(--xai); }} .or-text {{ color: var(--or); }}
 
         .detail-list {{ display: flex; flex-direction: column; gap: 4px; }}
