@@ -220,7 +220,7 @@ async def query_google_ai_cost(config: "AstrBotConfig") -> dict:
         # Initialize BigQuery client
         if config.get("google_service_account_json"):
             credentials = service_account.Credentials.from_service_account_file(
-                Path(get_astrbot_plugin_data_path()) / "AI账单查询" / config.get("google_service_account_json")[0],  # Get the first file path
+                Path(get_astrbot_plugin_data_path()) / "astrbot_plugin_aicost" / config.get("google_service_account_json")[0],  # Get the first file path
                 scopes=["https://www.googleapis.com/auth/bigquery"],
             )
             client = bigquery.Client(
