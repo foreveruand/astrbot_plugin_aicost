@@ -1,5 +1,5 @@
-name: astrbot_plugin_aicost
+name: AI账单查询
 version: 1.0.0
 description: AI服务费用查询插件 - 支持Azure OpenAI、OpenRouter、Google Gemini、xAI Grok
-author: AstrBot
-repo: https://github.com/AstrBotDevs/astrbot_plugin_aicost
+author: foreveruand
+repo: https://github.com/foreveruand/astrbot_plugin_aicost

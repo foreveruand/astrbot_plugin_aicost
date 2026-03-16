@@ -5,14 +5,14 @@ Supports Azure OpenAI, OpenRouter, Google AI (BigQuery), and xAI.
 
 import asyncio
 import re
+from pathlib import Path
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
 import aiohttp
 
-if TYPE_CHECKING:
-    from .config import AICostConfig
-
+from astrbot.api import AstrBotConfig
+from astrbot.core.utils.astrbot_path import get_astrbot_plugin_data_path
 try:
     from google.cloud import bigquery
     from google.oauth2 import service_account
@@ -42,14 +42,14 @@ def clean_azure_name(name: str) -> str:
     return parts[-1] if parts else name
 
 
-async def query_azure_cost(config: "AICostConfig") -> dict:
+async def query_azure_cost(config: "AstrBotConfig") -> dict:
     """Query Azure OpenAI costs via Cost Management API."""
     if not all(
         [
-            config.azure_tenant_id,
-            config.azure_client_id,
-            config.azure_client_secret,
-            config.azure_subscription_id,
+            config.get("azure_tenant_id"),
+            config.get("azure_client_id"),
+            config.get("azure_client_secret"),
+            config.get("azure_subscription_id"),
         ]
     ):
         return {
@@ -57,14 +57,14 @@ async def query_azure_cost(config: "AICostConfig") -> dict:
             "error": "Please configure Azure credentials (tenant_id, client_id, client_secret, subscription_id)",
         }
 
-    scope = f"/subscriptions/{config.azure_subscription_id}"
+    scope = f"/subscriptions/{config.get('azure_subscription_id')}"
     token_url = (
-        f"https://login.microsoftonline.com/{config.azure_tenant_id}/oauth2/v2.0/token"
+        f"https://login.microsoftonline.com/{config.get('azure_tenant_id')}/oauth2/v2.0/token"
     )
     data = {
-        "client_id": config.azure_client_id,
+        "client_id": config.get("azure_client_id"),
         "scope": "https://management.azure.com/.default",
-        "client_secret": config.azure_client_secret,
+        "client_secret": config.get("azure_client_secret"),
         "grant_type": "client_credentials",
     }
 
@@ -165,14 +165,14 @@ async def query_azure_cost(config: "AICostConfig") -> dict:
         return {"success": False, "error": str(e)}
 
 
-async def query_openrouter_balance(config: "AICostConfig") -> dict:
+async def query_openrouter_balance(config: AstrBotConfig) -> dict:
     """Query OpenRouter balance."""
-    if not config.openrouter_api_key:
+    if not config.get("openrouter_api_key"):
         return {"success": False, "error": "Please configure OpenRouter API Key"}
 
     try:
         async with aiohttp.ClientSession() as session:
-            headers = {"Authorization": f"Bearer {config.openrouter_api_key}"}
+            headers = {"Authorization": f"Bearer {config.get('openrouter_api_key')}"}
 
             async with session.get(
                 "https://openrouter.ai/api/v1/credits", headers=headers
@@ -202,7 +202,7 @@ async def query_openrouter_balance(config: "AICostConfig") -> dict:
         return {"success": False, "error": str(e)}
 
 
-async def query_google_ai_cost(config: "AICostConfig") -> dict:
+async def query_google_ai_cost(config: "AstrBotConfig") -> dict:
     """Query Google AI / Gemini API costs, grouped by model with input/output token breakdown."""
     if not GOOGLE_CLOUD_AVAILABLE:
         return {
@@ -210,24 +210,24 @@ async def query_google_ai_cost(config: "AICostConfig") -> dict:
             "error": "google-cloud-bigquery not installed. Run: pip install google-cloud-bigquery",
         }
 
-    if not config.google_project_id:
+    if not config.get("google_project_id"):
         return {"success": False, "error": "Please configure google_project_id"}
 
-    if not config.google_bq_table:
+    if not config.get("google_bq_table"):
         return {"success": False, "error": "Please configure google_bq_table"}
 
     try:
         # Initialize BigQuery client
-        if config.google_service_account_json:
+        if config.get("google_service_account_json"):
             credentials = service_account.Credentials.from_service_account_file(
-                config.google_service_account_json,
+                Path(get_astrbot_plugin_data_path()) / "AI账单查询" / config.get("google_service_account_json")[0],  # Get the first file path
                 scopes=["https://www.googleapis.com/auth/bigquery"],
             )
             client = bigquery.Client(
-                credentials=credentials, project=config.google_project_id
+                credentials=credentials, project=config.get("google_project_id")
             )
         else:
-            client = bigquery.Client(project=config.google_project_id)
+            client = bigquery.Client(project=config.get("google_project_id"))
 
         # Query SQL - grouped by model and token type
         query = f"""
@@ -262,7 +262,7 @@ async def query_google_ai_cost(config: "AICostConfig") -> dict:
                 SUM(usage.amount) as total_usage,
                 usage.unit,
                 currency
-            FROM `{config.google_bq_table}`
+            FROM `{config.get("google_bq_table")}`
             WHERE
                 (
                     service.description LIKE '%Generative Language API%'
@@ -363,9 +363,9 @@ async def query_google_ai_cost(config: "AICostConfig") -> dict:
         return {"success": False, "error": error_msg}
 
 
-async def query_xai_cost(config: "AICostConfig") -> dict:
+async def query_xai_cost(config: "AstrBotConfig") -> dict:
     """Query xAI billing info and balance."""
-    if not config.xai_api_key or not config.xai_team_id:
+    if not config.get("xai_api_key") or not config.get("xai_team_id"):
         return {
             "success": False,
             "error": "Please configure xAI API Key and Team ID",
@@ -373,9 +373,9 @@ async def query_xai_cost(config: "AICostConfig") -> dict:
 
     try:
         async with aiohttp.ClientSession() as session:
-            headers = {"Authorization": f"Bearer {config.xai_api_key}"}
+            headers = {"Authorization": f"Bearer {config.get("xai_api_key")}"}
             base_url = (
-                f"https://management-api.x.ai/v1/billing/teams/{config.xai_team_id}"
+                f"https://management-api.x.ai/v1/billing/teams/{config.get("xai_team_id")}"
             )
 
             # 1. Query balance (Prepaid Balance)

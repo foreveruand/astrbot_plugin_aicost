@@ -1,6 +1,6 @@
 {
   "enable_daily_report": {
-    "type": "boolean",
+    "type": "bool",
     "default": false,
     "description": "启用每日定时报告"
   },
@@ -8,6 +8,14 @@
     "type": "string",
     "default": "08:00",
     "description": "每日报告时间 (HH:MM)"
+  },
+  "report_targets": {
+    "type": "list",
+    "default": [],
+    "description": "报告发送目标列表",
+    "items": {
+      "type": "string"
+    }
   },
   "azure_tenant_id": {
     "type": "string",
@@ -45,9 +53,10 @@
     "description": "BigQuery 账单表地址 (project.dataset.table)"
   },
   "google_service_account_json": {
-    "type": "string",
-    "default": "",
-    "description": "Google 服务账号 JSON 文件路径"
+    "type": "file",
+    "default": [],
+    "file_types": ["json"],
+    "description": "Google 服务账号 JSON 文件"
   },
   "xai_api_key": {
     "type": "string",

@@ -8,9 +8,11 @@ from datetime import datetime
 
 from astrbot.api import logger, star
 from astrbot.api.event import AstrMessageEvent, filter
-from astrbot.core.message.components import Image
-
-from .config import AICostConfig
+from astrbot.core.message.components import Image, Plain
+from astrbot.core.message.message_event_result import MessageChain
+from astrbot.core.platform.message_session import MessageSession
+from astrbot.core.platform.message_type import MessageType
+from astrbot.api import AstrBotConfig
 from .providers import (
     query_google_ai_cost,
     query_openrouter_balance,
@@ -22,18 +24,15 @@ from .report import generate_html_report, html_to_image
 class Main(star.Star):
     """AI Cost Monitor Plugin."""
 
-    def __init__(self, context: star.Context) -> None:
+    def __init__(self, context: star.Context, config: AstrBotConfig) -> None:
         self.context = context
-        self.config = AICostConfig()
+        self.config = config
         self._cron_job_id: str | None = None
 
     async def initialize(self) -> None:
         """Initialize the plugin and register cron job if enabled."""
-        cfg = self.context.get_config()
-        plugin_config = cfg.get("astrbot_plugin_aicost", {})
-        self.config = AICostConfig(**plugin_config)
 
-        if self.config.enable_daily_report:
+        if self.config.get("enable_daily_report", False):
             await self._register_cron_job()
             logger.info("AI Cost daily report cron job registered")
 
@@ -51,8 +50,8 @@ class Main(star.Star):
         try:
             # Parse report time (default 08:00)
             hour, minute = 8, 0
-            if self.config.report_time:
-                parts = self.config.report_time.split(":")
+            if self.config.get("report_time"):
+                parts = self.config.get("report_time","").split(":")
                 if len(parts) == 2:
                     hour = int(parts[0])
                     minute = int(parts[1])
@@ -90,18 +89,47 @@ class Main(star.Star):
         return await html_to_image(html_content)
 
     async def _send_daily_report(self) -> None:
-        """Send the scheduled daily report."""
+        """Send the scheduled daily report to configured targets."""
         try:
             logger.info("Generating daily AI cost report...")
-            await self._generate_report_image()
+            img_bytes = await self._generate_report_image()
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             logger.info(f"Daily AI cost report generated at {timestamp}")
-            # Note: For scheduled reports, implement broadcasting
-            # via context.send_message to specific sessions
+
+            if not self.config.get("report_targets"):
+                logger.warning(
+                    "No report targets configured. Set 'report_targets' in config."
+                )
+                return
+
+            platform_manager = self.context.platform_manager
+            if not platform_manager or not platform_manager.platform_insts:
+                logger.warning("No platform instances available for sending report")
+                return
+            
+            image = Image.fromBytes(img_bytes)
+            message_chain = MessageChain([image])
+            for target in self.config.get("report_targets", []):
+                target = target.strip()
+                if not target:
+                    continue
+                session = MessageSession.from_str(target)
+                try:
+                    await self.context.send_message(session, message_chain)
+                    logger.info(
+                        f"Daily report sent to {target} via {session.platform_id}"
+                    )
+                    break
+                except Exception as e:
+                    logger.warning(
+                        f"Failed to send report to {target} via {session.platform_id}: {e}"
+                    )
+                    continue
         except Exception as e:
             logger.exception(f"Failed to generate daily AI cost report: {e}")
 
     @filter.command("aicost")
+    @filter.permission_type(filter.PermissionType.ADMIN)
     async def aicost(self, event: AstrMessageEvent):
         """Query AI service costs and generate a report.
 
