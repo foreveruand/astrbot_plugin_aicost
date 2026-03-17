@@ -262,7 +262,7 @@ async def query_google_ai_cost(config: "AstrBotConfig") -> dict:
                 SUM(usage.amount) as total_usage,
                 usage.unit,
                 currency
-            FROM `{config.get("google_bq_table")}`
+            FROM `{config.get('google_bq_table')}`
             WHERE
                 (
                     service.description LIKE '%Generative Language API%'
@@ -373,9 +373,9 @@ async def query_xai_cost(config: "AstrBotConfig") -> dict:
 
     try:
         async with aiohttp.ClientSession() as session:
-            headers = {"Authorization": f"Bearer {config.get("xai_api_key")}"}
+            headers = {"Authorization": f"Bearer {config.get('xai_api_key')}"}
             base_url = (
-                f"https://management-api.x.ai/v1/billing/teams/{config.get("xai_team_id")}"
+                f"https://management-api.x.ai/v1/billing/teams/{config.get('xai_team_id')}"
             )
 
             # 1. Query balance (Prepaid Balance)
