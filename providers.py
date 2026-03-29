@@ -22,6 +22,45 @@ except ImportError:
     GOOGLE_CLOUD_AVAILABLE = False
 
 
+def get_provider_specs() -> list[dict]:
+    """Return provider metadata in display order."""
+    return [
+        {
+            "id": "google",
+            "name": "Google Gemini",
+            "enabled": lambda config: bool(
+                config.get("google_project_id") and config.get("google_bq_table")
+            ),
+            "query": query_google_ai_cost,
+        },
+        {
+            "id": "xai",
+            "name": "xAI Grok",
+            "enabled": lambda config: bool(
+                config.get("xai_api_key") and config.get("xai_team_id")
+            ),
+            "query": query_xai_cost,
+        },
+        {
+            "id": "openrouter",
+            "name": "OpenRouter",
+            "enabled": lambda config: bool(config.get("openrouter_api_key")),
+            "query": query_openrouter_balance,
+        },
+        {
+            "id": "azure",
+            "name": "Azure OpenAI",
+            "enabled": lambda config: bool(
+                config.get("azure_tenant_id")
+                and config.get("azure_client_id")
+                and config.get("azure_client_secret")
+                and config.get("azure_subscription_id")
+            ),
+            "query": query_azure_cost,
+        },
+    ]
+
+
 def format_number(num: float) -> str:
     """Format large numbers, e.g., 12345 -> 12.3k."""
     if num >= 1000000:

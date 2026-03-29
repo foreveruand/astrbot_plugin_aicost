@@ -14,11 +14,9 @@ from astrbot.core.platform.message_session import MessageSession
 from astrbot.core.platform.message_type import MessageType
 from astrbot.api import AstrBotConfig
 from .providers import (
-    query_google_ai_cost,
-    query_openrouter_balance,
-    query_xai_cost,
+    get_provider_specs,
 )
-from .report import generate_html_report, html_to_image
+from .report import generate_report_image
 
 
 class Main(star.Star):
@@ -74,19 +72,30 @@ class Main(star.Star):
         except Exception as e:
             logger.error(f"Failed to register cron job: {e}")
 
-    async def _query_all_costs(self) -> tuple:
-        """Query all provider costs in parallel."""
-        return await asyncio.gather(
-            query_openrouter_balance(self.config),
-            query_google_ai_cost(self.config),
-            query_xai_cost(self.config),
+    async def _query_enabled_costs(self) -> list[dict]:
+        """Query enabled provider costs in parallel."""
+        enabled_specs = [
+            spec for spec in get_provider_specs() if spec["enabled"](self.config)
+        ]
+        if not enabled_specs:
+            raise RuntimeError("No provider modules are enabled in plugin config")
+
+        results = await asyncio.gather(
+            *(spec["query"](self.config) for spec in enabled_specs)
         )
+        return [
+            {
+                "id": spec["id"],
+                "name": spec["name"],
+                "data": result,
+            }
+            for spec, result in zip(enabled_specs, results)
+        ]
 
     async def _generate_report_image(self) -> bytes:
         """Generate the cost report as image bytes."""
-        openrouter_data, google_data, xai_data = await self._query_all_costs()
-        html_content = generate_html_report(google_data, xai_data, openrouter_data)
-        return await html_to_image(html_content)
+        provider_cards = await self._query_enabled_costs()
+        return generate_report_image(provider_cards)
 
     async def _send_daily_report(self) -> None:
         """Send the scheduled daily report to configured targets."""

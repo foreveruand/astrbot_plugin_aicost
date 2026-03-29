@@ -1,6 +1,6 @@
 name: astrbot_plugin_aicost
 display_name: AI服务费用查询插件
-version: 1.0.0
-description: AI服务费用查询插件 - 支持Azure OpenAI、OpenRouter、Google Gemini、xAI Grok
+version: 1.1.0
+description: AI服务费用查询插件，使用轻量图片渲染并按已启用模块动态聚合费用卡片
 author: foreveruand
 repo: https://github.com/foreveruand/astrbot_plugin_aicost
