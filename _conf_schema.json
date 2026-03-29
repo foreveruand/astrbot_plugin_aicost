@@ -17,6 +17,13 @@
       "type": "string"
     }
   },
+  "report_style": {
+    "type": "string",
+    "default": "midnight",
+    "description": "报告样式",
+    "hint": "可选 midnight、paper、aurora，设置页可直接切换",
+    "options": ["midnight", "paper", "aurora"]
+  },
   "azure_tenant_id": {
     "type": "string",
     "default": "",

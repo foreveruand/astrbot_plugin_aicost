@@ -95,7 +95,9 @@ class Main(star.Star):
     async def _generate_report_image(self) -> bytes:
         """Generate the cost report as image bytes."""
         provider_cards = await self._query_enabled_costs()
-        return generate_report_image(provider_cards)
+        return generate_report_image(
+            provider_cards, self.config.get("report_style", "midnight")
+        )
 
     async def _send_daily_report(self) -> None:
         """Send the scheduled daily report to configured targets."""
