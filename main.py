@@ -5,6 +5,7 @@ Supports Azure OpenAI, OpenRouter, Google AI (BigQuery), and xAI cost queries.
 
 import asyncio
 from datetime import datetime
+from pathlib import Path
 
 from astrbot.api import logger, star
 from astrbot.api.event import AstrMessageEvent, filter
@@ -13,6 +14,7 @@ from astrbot.core.message.message_event_result import MessageChain
 from astrbot.core.platform.message_session import MessageSession
 from astrbot.core.platform.message_type import MessageType
 from astrbot.api import AstrBotConfig
+from astrbot.core.utils.astrbot_path import get_astrbot_plugin_data_path
 from .providers import (
     get_provider_specs,
 )
@@ -95,8 +97,19 @@ class Main(star.Star):
     async def _generate_report_image(self) -> bytes:
         """Generate the cost report as image bytes."""
         provider_cards = await self._query_enabled_costs()
+        font_files = self.config.get("report_font_file") or []
+        font_path = None
+        if font_files:
+            font_path = str(
+                Path(get_astrbot_plugin_data_path())
+                / "astrbot_plugin_aicost"
+                / font_files[0]
+            )
         return generate_report_image(
-            provider_cards, self.config.get("report_style", "midnight")
+            provider_cards,
+            self.config.get("report_style", "midnight"),
+            font_path=font_path,
+            scale=self.config.get("report_scale", 2),
         )
 
     async def _send_daily_report(self) -> None:

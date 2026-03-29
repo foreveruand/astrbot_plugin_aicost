@@ -1,6 +1,6 @@
 name: astrbot_plugin_aicost
 display_name: AI服务费用查询插件
-version: 1.2.0
-description: AI服务费用查询插件，支持轻量图片渲染、动态聚合卡片与多种报告风格切换
+version: 1.3.0
+description: AI服务费用查询插件，支持轻量图片渲染、动态聚合卡片、多风格切换和自定义字体
 author: foreveruand
 repo: https://github.com/foreveruand/astrbot_plugin_aicost

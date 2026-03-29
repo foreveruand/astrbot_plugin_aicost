@@ -7,14 +7,21 @@ from __future__ import annotations
 from datetime import datetime
 from io import BytesIO
 from math import ceil
+from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
 
-CARD_WIDTH = 236
-CARD_MIN_HEIGHT = 208
-PADDING = 20
-GAP = 12
-HEADER_HEIGHT = 56
+BASE_CARD_WIDTH = 236
+BASE_CARD_MIN_HEIGHT = 208
+BASE_PADDING = 20
+BASE_GAP = 12
+BASE_HEADER_HEIGHT = 56
+
+CARD_WIDTH = BASE_CARD_WIDTH
+CARD_MIN_HEIGHT = BASE_CARD_MIN_HEIGHT
+PADDING = BASE_PADDING
+GAP = BASE_GAP
+HEADER_HEIGHT = BASE_HEADER_HEIGHT
 
 PROVIDER_THEMES = {
     "azure": {"accent": "#3b82f6"},
@@ -71,11 +78,18 @@ def format_number(num: float) -> str:
     return f"{num / 1000000:.2f}M"
 
 
-def _load_font(size: int, bold: bool = False) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
-    candidates = [
-        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf" if bold else "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-        "/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf" if bold else "/usr/share/fonts/dejavu/DejaVuSans.ttf",
-    ]
+def _load_font(
+    size: int, bold: bool = False, custom_font_path: str | None = None
+) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
+    candidates: list[str] = []
+    if custom_font_path:
+        candidates.append(custom_font_path)
+    candidates.extend(
+        [
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf" if bold else "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+            "/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf" if bold else "/usr/share/fonts/dejavu/DejaVuSans.ttf",
+        ]
+    )
     for path in candidates:
         try:
             return ImageFont.truetype(path, size)
@@ -92,6 +106,35 @@ FONT_BODY = _load_font(11)
 FONT_BODY_BOLD = _load_font(11, bold=True)
 FONT_SMALL = _load_font(9)
 FONT_SMALL_BOLD = _load_font(9, bold=True)
+
+
+def _configure_render(scale: int = 2, custom_font_path: str | None = None) -> None:
+    """Configure render-time dimensions and fonts."""
+    global CARD_WIDTH, CARD_MIN_HEIGHT, PADDING, GAP, HEADER_HEIGHT
+    global FONT_H1, FONT_TIME, FONT_CARD_TITLE, FONT_VALUE
+    global FONT_BODY, FONT_BODY_BOLD, FONT_SMALL, FONT_SMALL_BOLD
+
+    scale = max(1, int(scale))
+    CARD_WIDTH = BASE_CARD_WIDTH * scale
+    CARD_MIN_HEIGHT = BASE_CARD_MIN_HEIGHT * scale
+    PADDING = BASE_PADDING * scale
+    GAP = BASE_GAP * scale
+    HEADER_HEIGHT = BASE_HEADER_HEIGHT * scale
+
+    FONT_H1 = _load_font(22 * scale, bold=True, custom_font_path=custom_font_path)
+    FONT_TIME = _load_font(11 * scale, custom_font_path=custom_font_path)
+    FONT_CARD_TITLE = _load_font(
+        11 * scale, bold=True, custom_font_path=custom_font_path
+    )
+    FONT_VALUE = _load_font(28 * scale, bold=True, custom_font_path=custom_font_path)
+    FONT_BODY = _load_font(11 * scale, custom_font_path=custom_font_path)
+    FONT_BODY_BOLD = _load_font(
+        11 * scale, bold=True, custom_font_path=custom_font_path
+    )
+    FONT_SMALL = _load_font(9 * scale, custom_font_path=custom_font_path)
+    FONT_SMALL_BOLD = _load_font(
+        9 * scale, bold=True, custom_font_path=custom_font_path
+    )
 
 
 def get_report_style_options() -> list[tuple[str, str]]:
@@ -170,16 +213,16 @@ def _estimate_card_height(draw: ImageDraw.ImageDraw, provider_id: str, data: dic
 def _draw_card_header(
     draw: ImageDraw.ImageDraw, x: int, y: int, title: str, accent: str, colors: dict
 ) -> int:
-    draw.ellipse((x, y + 4, x + 6, y + 10), fill=accent)
-    _text(draw, (x + 14, y), title.upper(), FONT_CARD_TITLE, colors["text_muted"])
-    return y + 24
+    draw.ellipse((x, y + 4, x + 10, y + 14), fill=accent)
+    _text(draw, (x + 18, y), title.upper(), FONT_CARD_TITLE, colors["text_muted"])
+    return y + 28
 
 
 def _draw_error(draw: ImageDraw.ImageDraw, x: int, y: int, data: dict, colors: dict) -> int:
     lines = _wrap_text(draw, f'ERROR: {data.get("error", "Error")}', FONT_BODY, CARD_WIDTH - 40)
     for line in lines:
         _text(draw, (x, y), line, FONT_BODY, colors["error"])
-        y += 16
+        y += _measure(draw, line, FONT_BODY)[1] + 6
     return y
 
 
@@ -187,27 +230,27 @@ def _draw_openrouter_card(
     draw: ImageDraw.ImageDraw, x: int, y: int, data: dict, accent: str, colors: dict
 ) -> None:
     _text(draw, (x, y), _format_currency_compact(data["remaining"]), FONT_VALUE, accent)
-    y += 42
+    y += 54
     _text(draw, (x, y), "Usage", FONT_BODY, colors["text_dim"])
     usage = f"{data['usage_percent']:.1f}%"
     usage_width, _ = _measure(draw, usage, FONT_BODY)
     _text(draw, (x + CARD_WIDTH - 40 - usage_width, y), usage, FONT_BODY, colors["text_dim"])
-    y += 18
+    y += 24
     bar_x0 = x
     bar_y0 = y
     bar_x1 = x + CARD_WIDTH - 40
-    bar_y1 = y + 6
-    draw.rounded_rectangle((bar_x0, bar_y0, bar_x1, bar_y1), radius=3, fill=colors["progress_bg"])
+    bar_y1 = y + 10
+    draw.rounded_rectangle((bar_x0, bar_y0, bar_x1, bar_y1), radius=5, fill=colors["progress_bg"])
     fill_width = int((bar_x1 - bar_x0) * min(max(data["usage_percent"], 0), 100) / 100)
     if fill_width > 0:
-        draw.rounded_rectangle((bar_x0, bar_y0, bar_x0 + fill_width, bar_y1), radius=3, fill=accent)
-    y += 24
+        draw.rounded_rectangle((bar_x0, bar_y0, bar_x0 + fill_width, bar_y1), radius=5, fill=accent)
+    y += 32
     stat_width = (CARD_WIDTH - 48) // 2
     for idx, (label, value) in enumerate((("Used", f"${data['used']:.2f}"), ("Total", f"${data['total']:.2f}"))):
         sx = x + idx * (stat_width + 8)
-        draw.rounded_rectangle((sx, y, sx + stat_width, y + 46), radius=8, fill=colors["soft_panel"], outline=colors["border"])
-        _text(draw, (sx + 10, y + 8), label.upper(), FONT_SMALL, colors["text_muted"])
-        _text(draw, (sx + 10, y + 24), value, FONT_BODY_BOLD, colors["text_main"])
+        draw.rounded_rectangle((sx, y, sx + stat_width, y + 66), radius=12, fill=colors["soft_panel"], outline=colors["border"])
+        _text(draw, (sx + 12, y + 10), label.upper(), FONT_SMALL, colors["text_muted"])
+        _text(draw, (sx + 12, y + 34), value, FONT_BODY_BOLD, colors["text_main"])
 
 
 def _draw_xai_card(
@@ -217,16 +260,16 @@ def _draw_xai_card(
     balance = f"BAL: ${data['balance']:.2f}"
     balance_width, _ = _measure(draw, balance, FONT_SMALL)
     badge_x = x + CARD_WIDTH - 48 - balance_width
-    draw.rounded_rectangle((badge_x - 8, y + 8, x + CARD_WIDTH - 40, y + 28), radius=6, fill=colors["soft_panel"])
-    _text(draw, (badge_x - 2, y + 12), balance, FONT_SMALL, colors["text_dim"])
-    y += 48
+    draw.rounded_rectangle((badge_x - 10, y + 10, x + CARD_WIDTH - 40, y + 38), radius=8, fill=colors["soft_panel"])
+    _text(draw, (badge_x - 2, y + 16), balance, FONT_SMALL, colors["text_dim"])
+    y += 60
     for model in data.get("models", [])[:5]:
         name = _truncate(draw, model["model"], FONT_BODY, CARD_WIDTH - 100)
         _text(draw, (x, y), name, FONT_BODY, colors["text_dim"])
         price = f"${model['cost']:.2f}"
         price_width, _ = _measure(draw, price, FONT_BODY)
         _text(draw, (x + CARD_WIDTH - 40 - price_width, y), price, FONT_BODY, colors["text_main"])
-        y += 20
+        y += 28
     if data.get("warning"):
         _text(draw, (x, y + 2), _truncate(draw, data["warning"], FONT_SMALL, CARD_WIDTH - 40), FONT_SMALL, colors["text_muted"])
 
@@ -235,45 +278,54 @@ def _draw_azure_card(
     draw: ImageDraw.ImageDraw, x: int, y: int, data: dict, accent: str, colors: dict
 ) -> None:
     _text(draw, (x, y), _format_currency_compact(data["total_cost"]), FONT_VALUE, accent)
-    y += 48
+    y += 60
     for model in data.get("models", [])[:6]:
         name = _truncate(draw, model["model"], FONT_BODY, CARD_WIDTH - 95)
         _text(draw, (x, y), name, FONT_BODY, colors["text_dim"])
         price = f"${model['cost']:.2f}"
         price_width, _ = _measure(draw, price, FONT_BODY)
         _text(draw, (x + CARD_WIDTH - 40 - price_width, y), price, FONT_BODY, colors["text_main"])
-        y += 20
+        y += 28
 
 
 def _draw_google_card(
     draw: ImageDraw.ImageDraw, x: int, y: int, data: dict, accent: str, colors: dict
 ) -> None:
     _text(draw, (x, y), _format_currency(data["total_cost"]), FONT_VALUE, accent)
-    y += 48
+    y += 60
     for model in data.get("models", [])[:8]:
-        box_y1 = y + 32
-        draw.rounded_rectangle((x, y, x + CARD_WIDTH - 40, box_y1), radius=8, fill=colors["panel_alt"], outline=colors["border"])
+        box_y1 = y + 48
+        draw.rounded_rectangle((x, y, x + CARD_WIDTH - 40, box_y1), radius=12, fill=colors["panel_alt"], outline=colors["border"])
         name = _truncate(draw, model["model"], FONT_BODY_BOLD, CARD_WIDTH - 112)
-        _text(draw, (x + 8, y + 6), name, FONT_BODY_BOLD, colors["text_main"])
+        _text(draw, (x + 12, y + 10), name, FONT_BODY_BOLD, colors["text_main"])
         total = f"${model['total_cost']:.2f}"
         total_width, _ = _measure(draw, total, FONT_BODY_BOLD)
-        _text(draw, (x + CARD_WIDTH - 48 - total_width, y + 6), total, FONT_BODY_BOLD, colors["text_main"])
+        _text(draw, (x + CARD_WIDTH - 48 - total_width, y + 10), total, FONT_BODY_BOLD, colors["text_main"])
         token_line = _truncate(
             draw,
             f"IN {format_number(model['input_tokens'])} (${model['input_cost']:.2f}) | OUT {format_number(model['output_tokens'])} (${model['output_cost']:.2f})",
             FONT_SMALL,
             CARD_WIDTH - 56,
         )
-        _text(draw, (x + 8, y + 20), token_line, FONT_SMALL, colors["text_dim"])
-        y += 38
+        _text(draw, (x + 12, y + 30), token_line, FONT_SMALL, colors["text_dim"])
+        y += 56
     if data.get("warning"):
         _text(draw, (x, y + 2), _truncate(draw, data["warning"], FONT_SMALL, CARD_WIDTH - 40), FONT_SMALL, colors["text_muted"])
 
 
-def generate_report_image(provider_cards: list[dict], style_id: str = "midnight") -> bytes:
+def generate_report_image(
+    provider_cards: list[dict],
+    style_id: str = "midnight",
+    font_path: str | None = None,
+    scale: int = 2,
+) -> bytes:
     """Generate the cost report as PNG image bytes."""
     if not provider_cards:
         raise RuntimeError("No provider modules are enabled. Please configure at least one provider.")
+    resolved_font_path = None
+    if font_path and Path(font_path).exists():
+        resolved_font_path = font_path
+    _configure_render(scale=scale, custom_font_path=resolved_font_path)
     colors = _resolve_style(style_id)
 
     columns = min(3, len(provider_cards))
