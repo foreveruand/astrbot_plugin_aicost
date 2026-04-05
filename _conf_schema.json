@@ -24,18 +24,6 @@
     "hint": "可选 midnight、paper、aurora，设置页可直接切换",
     "options": ["midnight", "paper", "aurora"]
   },
-  "report_scale": {
-    "type": "int",
-    "default": 2,
-    "description": "图片渲染倍率",
-    "hint": "值越大图片越清晰，体积也越大，推荐 2 或 3"
-  },
-  "report_font_file": {
-    "type": "file",
-    "default": [],
-    "file_types": ["ttf", "otf", "ttc"],
-    "description": "自定义报告字体文件"
-  },
   "azure_tenant_id": {
     "type": "string",
     "default": "",

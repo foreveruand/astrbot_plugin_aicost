@@ -1,5 +1,14 @@
 # Changelog
 
+
+## 1.3.1 - 2026-04-05
+
+- 改用 AstrBot 原生的 HTML 渲染管线（`html_render` / t2i），移除基于 `Pillow` 的自定义绘制逻辑。
+- 新增 Jinja2 模板 `resource/report.html` 与数据构建器 `report.build_report_template_data()`，通过模板渲染生成报告图片。
+- 发送逻辑改为使用图片 URL（`Image.fromURL`），兼容 AstrBot 的 t2i 渲染返回；不再直接构造图片字节。
+- 从配置中移除 `report_scale` 与 `report_font_file`（Pillow 专用），并已从 `requirements.txt` 中移除 `Pillow` 依赖。
+- 如需自定义字体或输出清晰度，请使用 AstrBot 的 t2i 渲染端点/全局模板配置或运行本地 t2i 服务。
+
 ## 1.3.0 - 2026-03-29
 
 - 新增 `report_font_file` 配置，支持上传 `ttf`、`otf`、`ttc` 作为报告自定义字体

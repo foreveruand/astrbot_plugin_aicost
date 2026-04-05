@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1200, initial-scale=1.0">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+                   'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Arial, sans-serif;
+      background: {{ style.bg }};
+      color: {{ style.text_main }};
+      padding: 36px 40px 40px;
+      width: 1200px;
+    }
+
+    /* ── Header ─────────────────────────────────────────────── */
+    .header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 28px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid {{ style.border }};
+    }
+    .header-title {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: {{ style.text_main }};
+    }
+    .header-time {
+      font-size: 13px;
+      color: {{ style.text_muted }};
+    }
+
+    /* ── Grid ────────────────────────────────────────────────── */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat({{ columns }}, 1fr);
+      gap: 16px;
+    }
+
+    /* ── Card ────────────────────────────────────────────────── */
+    .card {
+      background: {{ style.panel }};
+      border: 1px solid {{ style.border }};
+      border-radius: 14px;
+      padding: 18px 20px 20px;
+    }
+
+    /* Card header row */
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .card-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .card-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      color: {{ style.text_muted }};
+      text-transform: uppercase;
+    }
+
+    /* Big value */
+    .card-value {
+      font-size: 34px;
+      font-weight: 700;
+      line-height: 1.1;
+      margin-bottom: 16px;
+    }
+
+    /* Error */
+    .error-text {
+      font-size: 13px;
+      color: {{ style.error }};
+      word-break: break-word;
+    }
+
+    /* ── Model table rows ────────────────────────────────────── */
+    .model-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 8px;
+      gap: 8px;
+    }
+    .model-name {
+      font-size: 13px;
+      color: {{ style.text_dim }};
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+      min-width: 0;
+    }
+    .model-cost {
+      font-size: 13px;
+      font-weight: 600;
+      color: {{ style.text_main }};
+      white-space: nowrap;
+    }
+
+    /* ── OpenRouter progress bar ─────────────────────────────── */
+    .usage-bar-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: {{ style.text_dim }};
+      margin-bottom: 6px;
+    }
+    .bar-track {
+      height: 8px;
+      border-radius: 4px;
+      background: {{ style.progress_bg }};
+      margin-bottom: 14px;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 4px;
+    }
+    .stat-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .stat-box {
+      background: {{ style.soft_panel }};
+      border: 1px solid {{ style.border }};
+      border-radius: 10px;
+      padding: 8px 12px;
+    }
+    .stat-label {
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      color: {{ style.text_muted }};
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .stat-value {
+      font-size: 14px;
+      font-weight: 700;
+      color: {{ style.text_main }};
+    }
+
+    /* ── Google model boxes ──────────────────────────────────── */
+    .google-model-box {
+      background: {{ style.panel_alt }};
+      border: 1px solid {{ style.border }};
+      border-radius: 10px;
+      padding: 8px 12px;
+      margin-bottom: 8px;
+    }
+    .google-model-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 4px;
+    }
+    .google-model-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: {{ style.text_main }};
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+      min-width: 0;
+    }
+    .google-model-total {
+      font-size: 13px;
+      font-weight: 700;
+      color: {{ style.text_main }};
+      white-space: nowrap;
+      margin-left: 8px;
+    }
+    .google-token-line {
+      font-size: 11px;
+      color: {{ style.text_dim }};
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* ── Warning / muted note ────────────────────────────────── */
+    .card-warning {
+      font-size: 11px;
+      color: {{ style.text_muted }};
+      margin-top: 6px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* xAI balance badge */
+    .xai-header-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .xai-balance-badge {
+      background: {{ style.soft_panel }};
+      border-radius: 8px;
+      font-size: 11px;
+      color: {{ style.text_dim }};
+      padding: 4px 8px;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <span class="header-title">AI COST MONITOR</span>
+  <span class="header-time">{{ timestamp }}</span>
+</div>
+
+<div class="grid">
+  {% for card in cards %}
+  <div class="card">
+    <!-- Card header -->
+    <div class="card-header">
+      <div class="card-dot" style="background:{{ card.accent }}"></div>
+      <span class="card-title">{{ card.name }}</span>
+    </div>
+
+    {% if not card.data.success %}
+      <!-- Error state -->
+      <p class="error-text">ERROR: {{ card.data.error }}</p>
+
+    {% elif card.id == "openrouter" %}
+      <!-- OpenRouter -->
+      <div class="card-value" style="color:{{ card.accent }}">
+        ${{ "%.2f"|format(card.data.remaining) }}
+      </div>
+      <div class="usage-bar-row">
+        <span>Usage</span>
+        <span>{{ "%.1f"|format(card.data.usage_percent) }}%</span>
+      </div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:{{ [card.data.usage_percent, 100]|min }}%;background:{{ card.accent }}"></div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-box">
+          <div class="stat-label">Used</div>
+          <div class="stat-value">${{ "%.2f"|format(card.data.used) }}</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Total</div>
+          <div class="stat-value">${{ "%.2f"|format(card.data.total) }}</div>
+        </div>
+      </div>
+
+    {% elif card.id == "xai" %}
+      <!-- xAI -->
+      <div class="xai-header-row">
+        <div class="card-value" style="color:{{ card.accent }};margin-bottom:0">
+          ${{ "%.2f"|format(card.data.total_cost) }}
+        </div>
+        <div class="xai-balance-badge">BAL: ${{ "%.2f"|format(card.data.balance) }}</div>
+      </div>
+      {% for model in card.data.models[:5] %}
+      <div class="model-row">
+        <span class="model-name">{{ model.model }}</span>
+        <span class="model-cost">${{ "%.2f"|format(model.cost) }}</span>
+      </div>
+      {% endfor %}
+      {% if card.data.warning %}
+      <div class="card-warning">{{ card.data.warning }}</div>
+      {% endif %}
+
+    {% elif card.id == "azure" %}
+      <!-- Azure -->
+      <div class="card-value" style="color:{{ card.accent }}">
+        ${{ "%.2f"|format(card.data.total_cost) }}
+      </div>
+      {% for model in card.data.models[:6] %}
+      <div class="model-row">
+        <span class="model-name">{{ model.model }}</span>
+        <span class="model-cost">${{ "%.2f"|format(model.cost) }}</span>
+      </div>
+      {% endfor %}
+
+    {% elif card.id == "google" %}
+      <!-- Google -->
+      <div class="card-value" style="color:{{ card.accent }}">
+        ${{ "%.2f"|format(card.data.total_cost) }}
+      </div>
+      {% for model in card.data.models[:8] %}
+      <div class="google-model-box">
+        <div class="google-model-top">
+          <span class="google-model-name">{{ model.model }}</span>
+          <span class="google-model-total">${{ "%.2f"|format(model.total_cost) }}</span>
+        </div>
+        <div class="google-token-line">
+          IN {{ "%.2f"|format(model.input_tokens / 1000000) }}M (${{ "%.2f"|format(model.input_cost) }}) |
+          OUT {{ "%.2f"|format(model.output_tokens / 1000000) }}M (${{ "%.2f"|format(model.output_cost) }})
+        </div>
+      </div>
+      {% endfor %}
+      {% if card.data.warning %}
+      <div class="card-warning">{{ card.data.warning }}</div>
+      {% endif %}
+
+    {% else %}
+      <!-- Unknown provider fallback -->
+      <p class="error-text">Unknown provider: {{ card.id }}</p>
+    {% endif %}
+
+  </div>
+  {% endfor %}
+</div>
+
+</body>
+</html>

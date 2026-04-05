@@ -4,6 +4,7 @@ Supports Azure OpenAI, OpenRouter, Google AI (BigQuery), and xAI cost queries.
 """
 
 import asyncio
+import os
 from datetime import datetime
 from pathlib import Path
 
@@ -14,11 +15,10 @@ from astrbot.core.message.message_event_result import MessageChain
 from astrbot.core.platform.message_session import MessageSession
 from astrbot.core.platform.message_type import MessageType
 from astrbot.api import AstrBotConfig
-from astrbot.core.utils.astrbot_path import get_astrbot_plugin_data_path
 from .providers import (
     get_provider_specs,
 )
-from .report import generate_report_image
+from .report import build_report_template_data, load_report_template
 
 
 class Main(star.Star):
@@ -94,29 +94,22 @@ class Main(star.Star):
             for spec, result in zip(enabled_specs, results)
         ]
 
-    async def _generate_report_image(self) -> bytes:
-        """Generate the cost report as image bytes."""
+    async def _generate_report_image(self) -> str:
+        """Generate the cost report via AstrBot's native html_render. Returns an image URL."""
         provider_cards = await self._query_enabled_costs()
-        font_files = self.config.get("report_font_file") or []
-        font_path = None
-        if font_files:
-            font_path = str(
-                Path(get_astrbot_plugin_data_path())
-                / "astrbot_plugin_aicost"
-                / font_files[0]
-            )
-        return generate_report_image(
+        template_data = build_report_template_data(
             provider_cards,
             self.config.get("report_style", "midnight"),
-            font_path=font_path,
-            scale=self.config.get("report_scale", 2),
         )
+        plugin_dir = os.path.dirname(__file__)
+        template = load_report_template(plugin_dir)
+        return await self.html_render(template, template_data, return_url=True)
 
     async def _send_daily_report(self) -> None:
         """Send the scheduled daily report to configured targets."""
         try:
             logger.info("Generating daily AI cost report...")
-            img_bytes = await self._generate_report_image()
+            img_url = await self._generate_report_image()
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             logger.info(f"Daily AI cost report generated at {timestamp}")
 
@@ -131,7 +124,7 @@ class Main(star.Star):
                 logger.warning("No platform instances available for sending report")
                 return
             
-            image = Image.fromBytes(img_bytes)
+            image = Image.fromURL(img_url)
             message_chain = MessageChain([image])
             for target in self.config.get("report_targets", []):
                 target = target.strip()
@@ -161,10 +154,10 @@ class Main(star.Star):
         """
         try:
             logger.info("Generating AI cost report...")
-            img_bytes = await self._generate_report_image()
+            img_url = await self._generate_report_image()
 
             # Send image using Image component
-            image = Image.fromBytes(img_bytes)
+            image = Image.fromURL(img_url)
             result = event.make_result()
             result.chain.append(image)
             await event.send(result)
