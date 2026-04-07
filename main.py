@@ -6,15 +6,13 @@ Supports Azure OpenAI, OpenRouter, Google AI (BigQuery), and xAI cost queries.
 import asyncio
 import os
 from datetime import datetime
-from pathlib import Path
 
-from astrbot.api import logger, star
+from astrbot.api import AstrBotConfig, logger, star
 from astrbot.api.event import AstrMessageEvent, filter
-from astrbot.core.message.components import Image, Plain
+from astrbot.core.message.components import Image
 from astrbot.core.message.message_event_result import MessageChain
 from astrbot.core.platform.message_session import MessageSession
-from astrbot.core.platform.message_type import MessageType
-from astrbot.api import AstrBotConfig
+
 from .providers import (
     get_provider_specs,
 )
@@ -48,10 +46,20 @@ class Main(star.Star):
     async def _register_cron_job(self) -> None:
         """Register the daily report cron job."""
         try:
+            job_name = "AI Cost Daily Report"
+
+            # Delete existing job first to prevent duplicates on plugin reload
+            jobs = await self.context.cron_manager.list_jobs(job_type="basic")
+            for job in jobs:
+                if job.name == job_name:
+                    await self.context.cron_manager.delete_job(job.job_id)
+                    logger.info(f"Deleted existing cron job: {job.job_id}")
+                    break
+
             # Parse report time (default 08:00)
             hour, minute = 8, 0
             if self.config.get("report_time"):
-                parts = self.config.get("report_time","").split(":")
+                parts = self.config.get("report_time", "").split(":")
                 if len(parts) == 2:
                     hour = int(parts[0])
                     minute = int(parts[1])
@@ -59,7 +67,7 @@ class Main(star.Star):
             cron_expr = f"{minute} {hour} * * *"
 
             job = await self.context.cron_manager.add_basic_job(
-                name="AI Cost Daily Report",
+                name=job_name,
                 cron_expression=cron_expr,
                 timezone="Asia/Shanghai",
                 handler=self._send_daily_report,
@@ -123,7 +131,7 @@ class Main(star.Star):
             if not platform_manager or not platform_manager.platform_insts:
                 logger.warning("No platform instances available for sending report")
                 return
-            
+
             image = Image.fromURL(img_url)
             message_chain = MessageChain([image])
             for target in self.config.get("report_targets", []):

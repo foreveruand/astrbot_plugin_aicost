@@ -5,14 +5,14 @@ Supports Azure OpenAI, OpenRouter, Google AI (BigQuery), and xAI.
 
 import asyncio
 import re
-from pathlib import Path
 from datetime import datetime, timezone
-from typing import TYPE_CHECKING
+from pathlib import Path
 
 import aiohttp
 
 from astrbot.api import AstrBotConfig
 from astrbot.core.utils.astrbot_path import get_astrbot_plugin_data_path
+
 try:
     from google.cloud import bigquery
     from google.oauth2 import service_account
@@ -97,9 +97,7 @@ async def query_azure_cost(config: "AstrBotConfig") -> dict:
         }
 
     scope = f"/subscriptions/{config.get('azure_subscription_id')}"
-    token_url = (
-        f"https://login.microsoftonline.com/{config.get('azure_tenant_id')}/oauth2/v2.0/token"
-    )
+    token_url = f"https://login.microsoftonline.com/{config.get('azure_tenant_id')}/oauth2/v2.0/token"
     data = {
         "client_id": config.get("azure_client_id"),
         "scope": "https://management.azure.com/.default",
@@ -259,7 +257,11 @@ async def query_google_ai_cost(config: "AstrBotConfig") -> dict:
         # Initialize BigQuery client
         if config.get("google_service_account_json"):
             credentials = service_account.Credentials.from_service_account_file(
-                Path(get_astrbot_plugin_data_path()) / "astrbot_plugin_aicost" / config.get("google_service_account_json")[0],  # Get the first file path
+                Path(get_astrbot_plugin_data_path())
+                / "astrbot_plugin_aicost"
+                / config.get("google_service_account_json")[
+                    0
+                ],  # Get the first file path
                 scopes=["https://www.googleapis.com/auth/bigquery"],
             )
             client = bigquery.Client(
@@ -301,7 +303,7 @@ async def query_google_ai_cost(config: "AstrBotConfig") -> dict:
                 SUM(usage.amount) as total_usage,
                 usage.unit,
                 currency
-            FROM `{config.get('google_bq_table')}`
+            FROM `{config.get("google_bq_table")}`
             WHERE
                 (
                     service.description LIKE '%Generative Language API%'
@@ -413,9 +415,7 @@ async def query_xai_cost(config: "AstrBotConfig") -> dict:
     try:
         async with aiohttp.ClientSession() as session:
             headers = {"Authorization": f"Bearer {config.get('xai_api_key')}"}
-            base_url = (
-                f"https://management-api.x.ai/v1/billing/teams/{config.get('xai_team_id')}"
-            )
+            base_url = f"https://management-api.x.ai/v1/billing/teams/{config.get('xai_team_id')}"
 
             # 1. Query balance (Prepaid Balance)
             async with session.get(

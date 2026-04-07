@@ -1,6 +1,12 @@
 # Changelog
 
 
+## 1.3.2 - 2026-04-07
+
+- Fix duplicate "AI Cost Daily Report" cron job creation on plugin reload/restart
+- Add job deduplication logic: delete existing job before registering new one
+- Reference: same pattern used in astrbot_plugin_airss scheduler
+
 ## 1.3.1 - 2026-04-05
 
 - 改用 AstrBot 原生的 HTML 渲染管线（`html_render` / t2i），移除基于 `Pillow` 的自定义绘制逻辑。

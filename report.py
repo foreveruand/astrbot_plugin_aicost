@@ -108,4 +108,3 @@ def load_report_template(plugin_dir: str) -> str:
     """Load the Jinja2 HTML template from the plugin's resource directory."""
     tmpl_path = Path(plugin_dir) / "resource" / "report.html"
     return tmpl_path.read_text(encoding="utf-8")
-
