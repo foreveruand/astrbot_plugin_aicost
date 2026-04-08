@@ -40,6 +40,30 @@ pip install -r requirements.txt
 | `report_scale` | 图片渲染倍率，推荐 `2` 或 `3` |
 | `report_font_file` | 自定义字体文件，支持 `ttf` / `otf` / `ttc` |
 
+### 图片质量控制
+| 参数 | 默认值 | 说明 |
+|------|--------|------|
+| `t2i_image_type` | "jpeg" | 报告图片格式，可选 `jpeg` 或 `png` |
+| `t2i_image_quality` | 70 | 报告图片质量（仅 JPEG 有效），范围 10-100 |
+| `t2i_scale` | "device" | 页面缩放设置，可选 `css` 或 `device` |
+| `t2i_full_page` | true | 渲染完整页面（而非仅视口大小） |
+
+#### 图片质量控制说明
+
+报告图片渲染时可控制以下参数：
+
+- **`t2i_image_type`**: 选择图片格式
+  - `jpeg`: 文件更小，适合网络传输
+  - `png`: 支持透明背景，文件较大
+- **`t2i_image_quality`**: JPEG 图片质量（10-100）
+  - 推荐 60-90，数值越高质量越好但文件越大
+- **`t2i_scale`**: 页面缩放设置
+  - `device`: 使用设备缩放设置，适合高分屏
+  - `css`: CSS像素对应设备分辨率，高分屏截图变小
+- **`t2i_full_page`**: 是否渲染完整页面
+  - `true`: 渲染完整内容页面
+  - `false`: 仅渲染视口大小
+
 ### Azure OpenAI（弃用）
 | 参数 | 说明 |
 |------|------|
