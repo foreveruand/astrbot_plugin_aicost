@@ -111,19 +111,25 @@ class Main(star.Star):
         )
         plugin_dir = os.path.dirname(__file__)
         template = load_report_template(plugin_dir)
-        t2i_options = self._get_t2i_options()
+        t2i_options = self._get_t2i_options(template_data)
         return await self.html_render(
             template, template_data, return_url=True, options=t2i_options
         )
 
-    def _get_t2i_options(self) -> dict:
+    def _get_t2i_options(self, template_data: dict) -> dict:
         """Get t2i rendering options from configuration."""
-        return {
+        full_page = self.config.get("t2i_full_page", True)
+        options = {
             "type": self.config.get("t2i_image_type", "jpeg"),
             "quality": self.config.get("t2i_image_quality", 70),
-            "full_page": self.config.get("t2i_full_page", True),
+            "full_page": full_page,
             "scale": self.config.get("t2i_scale", "device"),
         }
+        if not full_page:
+            height = max(int(template_data.get("canvas_height", 420)), 1)
+            options["viewport"] = {"width": 1200, "height": height}
+            options["clip"] = {"x": 0, "y": 0, "width": 1200, "height": height}
+        return options
 
     async def _send_daily_report(self) -> None:
         """Send the scheduled daily report to configured targets."""

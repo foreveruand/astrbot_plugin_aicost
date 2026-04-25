@@ -1,6 +1,13 @@
 # Changelog
 
 
+## 1.3.4 - 2026-04-25
+
+### Changed
+- Unified xAI Grok and Azure model rows with the boxed model style used by Gemini.
+- When `t2i_full_page` is disabled, pass a content-sized viewport and clip rectangle to AstrBot t2i so reports avoid trailing blank space where supported by the renderer.
+- Updated report template sizing metadata for tighter non-full-page captures.
+
 ## 1.3.3 - 2026-04-08
 
 ### Added

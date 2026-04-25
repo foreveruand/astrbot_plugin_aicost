@@ -69,6 +69,37 @@ def _resolve_style(style_id: str | None) -> dict:
     return STYLES["midnight"]
 
 
+def _estimate_card_height(card: dict) -> int:
+    data = card.get("data", {})
+    if not data.get("success"):
+        return 92
+
+    card_id = card.get("id")
+    if card_id == "openrouter":
+        return 186
+    if card_id == "google":
+        model_count = min(len(data.get("models", [])), 8)
+        warning_height = 17 if data.get("warning") else 0
+        return 123 + model_count * 54 + warning_height
+    if card_id == "xai":
+        model_count = min(len(data.get("models", [])), 5)
+        warning_height = 17 if data.get("warning") else 0
+        return 107 + model_count * 45 + warning_height
+    if card_id == "azure":
+        model_count = min(len(data.get("models", [])), 6)
+        return 123 + model_count * 45
+
+    return 92
+
+
+def _estimate_canvas_height(cards: list[dict]) -> int:
+    body_padding = 76
+    header_height = 48
+    header_margin = 28
+    tallest_card = max((_estimate_card_height(card) for card in cards), default=92)
+    return body_padding + header_height + header_margin + tallest_card
+
+
 def build_report_template_data(
     provider_cards: list[dict],
     style_id: str = "midnight",
@@ -101,6 +132,7 @@ def build_report_template_data(
         "columns": columns,
         "timestamp": timestamp,
         "cards": cards,
+        "canvas_height": _estimate_canvas_height(cards),
     }
 
 
