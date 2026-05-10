@@ -276,6 +276,7 @@ async def query_google_ai_cost(config: "AstrBotConfig") -> dict:
                 CASE
                     WHEN LOWER(sku.description) LIKE '%gemini 2.5 flash native image generation%' THEN 'Nano Banana Pro'
                     WHEN LOWER(sku.description) LIKE '%gemini 3 pro native image generation%' THEN 'Nano Banana'
+                    WHEN LOWER(sku.description) LIKE '%gemini 3.1 flash image%' THEN 'Nano Banana 2'
                     WHEN LOWER(sku.description) LIKE '%gemini 2.5 flash lite%' THEN 'Gemini 2.5 Flash Lite'
                     WHEN LOWER(sku.description) LIKE '%gemini 3.1 flash lite%' THEN 'Gemini 3.1 Flash Lite'
                     WHEN LOWER(sku.description) LIKE '%gemini 2.5 flash%' THEN 'Gemini 2.5 Flash'
